@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<link rel="stylesheet" type="text/css" href="../ui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="../ui/themes/icon.css">
+<script type="text/javascript" src="../ui/jquery.min.js"></script>
+<script type="text/javascript" src="../ui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="../ui/jquery.serializejson.js"></script>
+<script type="text/javascript" src="../ui/locale/easyui-lang-zh_CN.js"></script>
+</head>
+<body>
+	<!-- 查询参数设置 -->
+	<form id="searchForm" method="post">   
+        <label for="name">部门名称:</label>   
+        <input class="easyui-validatebox" type="text" name="cname"/>   
+        <label for="tele">部门电话:</label>   
+        <input class="easyui-validatebox" type="text" name="ctele"/>   
+        <button type="button" id="submitBtn">查询</button>
+	</form>
+	<script type="text/javascript">
+		$("#submitBtn").click(function(){
+			var formData = $("#searchForm").serializeJSON();
+			console.info(formData)
+			$("#depTable").datagrid('load',formData)
+		})
+	</script>
+	
+	<!-- 部门列表展示 -->
+	<table id="depTable"></table>  
+	<script type="text/javascript">
+		$('#depTable').datagrid({    
+		    url:'/erp/dep', 
+		    method:'get',
+		    columns:[[    
+		        {field:'uuid',title:'部门编号',width:100,align:'center'},    
+		        {field:'name',title:'部门名称',width:100,align:'center'},    
+		        {field:'tele',title:'部门电话',width:100,align:'center'},
+		        {field:'-',title:'操作',width:100,align:'center',formatter: function(value,row,index){
+		        	return "<a href='#' onclick='edit("+row.uuid+")'>修改</a> <a href='#' onclick='del("+row.uuid+")'>删除</a>";
+		        }}
+		    ]],
+		    pagination:true,
+	    	toolbar: [{
+				text:'添加',
+				iconCls:'icon-add',
+				handler:function(){
+					$("#saveForm").form('clear');
+					$("#editWindow").window('open');
+				}
+			}]
+
+		}); 
+	
+		//删除操作
+		function del(id){
+			$.messager.confirm('删除对话框','确认删除吗？', function(r){
+				if (r){
+				 	$.post("/erp/dep", {id: id,_method: "delete"}, function(d){
+						$.messager.alert('警告',d.msg); 
+					     $("#depTable").datagrid('reload');
+					}) 
+				}
+			});
+		}
+		
+		//修改操作
+		function edit(id){
+			console.info(id)
+			$("#editWindow").window('open');
+			$("#saveForm").form('clear');
+			$("#saveForm").form('load','/erp/dep?uuid='+id);
+		}
+	</script>
+	
+	<!-- 弹出窗口 -->
+	<div id="editWindow" class="easyui-window" title="部门信息" style="width:300px;height:150px" data-options="iconCls:'icon-save',modal:true,closed:true">   
+	    <form id="saveForm" method="post" style="margin-top: 10px">   
+	        <label for="name">部门名称:</label>   
+	        <input class="easyui-validatebox" type="text" name="name" required="true"/><br>   
+	        <label for="tele">部门电话:</label>   
+	        <input class="easyui-validatebox" type="text" name="tele"/><br>  
+	        <a id="saveBtn" class="easyui-linkbutton" style="margin-top: 10px" data-options="iconCls:'icon-save'">保存</a>   
+		</form> 
+		<script type="text/javascript">
+			$("#saveBtn").click(function(){
+				var formData = $("#saveForm").serializeJSON();
+				$.ajax({
+				   type: "POST",
+				   url: "/erp/dep",
+				   data: formData,
+				   success: function(d){
+				     if(d.status==1){
+						 $("#editWindow").window('close');
+						 $("#depTable").datagrid('reload');
+					 }
+				     $.messager.alert('警告',d.msg);    
+				   }
+				});
+			})
+		</script>  
+	</div>  
+</body>
+</html>
